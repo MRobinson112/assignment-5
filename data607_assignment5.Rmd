@@ -1,0 +1,66 @@
+---
+title: "assignment 5"
+author: "Michael Robinson"
+date: "2023-10-06"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r assignment_5}
+# Load the required libraries
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+
+
+Flight_info <- "https://raw.githubusercontent.com/MRobinson112/assignment-5/main/flightlab2.csv"
+
+Airline_df <- read.csv(Flight_info, skip = 1, header = FALSE, stringsAsFactors = FALSE, na.strings = "")
+
+# Removing blank rows
+Airline_df <- Airline_df[complete.cases(Airline_df), ]
+
+# Rename columns
+colnames(Airline_df) <- c("Airlines", "Status", "Los_Angeles", "Phoenix", "San_Diego", "San_Francisco", "Seattle")
+
+# Cleaning and transform the data
+Clean_data <- Airline_df %>%
+  pivot_longer(cols = c(Los_Angeles, Phoenix, San_Diego, San_Francisco, Seattle),
+               names_to = "Destination",
+               values_to = "Delay") %>%
+  filter(!is.na(Delay)) %>%
+  mutate(Status = ifelse(Status == "On time", "OnTime", "Delayed"))
+
+Clean_data
+
+# Perform analysis
+new_data <- Clean_data %>%
+  group_by(Airlines, Status) %>%
+  summarise(AvgDelay = mean(Delay), .groups = 'drop')
+    new_data
+
+delay_by_dest <- Clean_data %>%
+  group_by(Destination, Status) %>%
+  summarise(AvgDelay = mean(Delay), .groups = 'drop')
+    delay_by_dest
+
+# comparing arrival delays for the two airlines
+ggplot(data = new_data, aes(x = Airlines, y = AvgDelay, fill = Status)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Arrival Delays Comparison",
+       x = "Airlines",
+       y = "Average Delay") +
+  theme_minimal()
+
+```
